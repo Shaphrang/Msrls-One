@@ -1,24 +1,14 @@
-//app\layout.tsx
 import './globals.css'
-import { Sidebar } from '@/components/sidebar'
 
-export default function RootLayout({
+export default function PublicLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
     <html lang="en">
-      <body>
-        <div className="flex h-screen">
-          {/* Permanent Sidebar */}
-          <Sidebar />
-
-          {/* Main Content Area */}
-          <main className="flex-1 bg-gray-50 overflow-y-auto p-6">
-            {children}
-          </main>
-        </div>
+      <body className="bg-white text-slate-900">
+        {children}
       </body>
     </html>
   )
