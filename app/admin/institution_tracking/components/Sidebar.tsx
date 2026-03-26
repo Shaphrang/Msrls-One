@@ -34,7 +34,7 @@ export default function Sidebar() {
         { name: "CLF transaction", icon: FileText, href: "/admin" },
         { name: "VO transaction", icon: FileText, href: "/admin" },
         { name: "Activities and Programmes", icon: CalendarDays, href: "/admin" },
-        { name: "File Tracking", icon: BarChart3, href: "/admin" },
+        { name: "CLF & VO Meetings", icon: BarChart3, href: "/admin/institution_tracking/meetings_dashboard" },
         { name: "AAP Assessment", icon: FileText, href: "/admin" },
         { name: "FUNDS", icon: CalendarDays, href: "/admin" },
         { name: "Member ID-Card", icon: FileText, href: "/admin" },        

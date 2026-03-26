@@ -1,0 +1,656 @@
+
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CBO Analytics Dashboard</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/recharts@2.5.0/dist/Recharts.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+  <style>
+    html, body, .app-root { height: 100%; margin: 0; }
+    .app-root { overflow-y: auto; overflow-x: hidden; }
+    body { background: #f8fafc; }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #e2e8f0; }
+    ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.5s ease-out both; }
+    .fade-up-1 { animation-delay: 0.05s; }
+    .fade-up-2 { animation-delay: 0.1s; }
+    .fade-up-3 { animation-delay: 0.15s; }
+    .fade-up-4 { animation-delay: 0.2s; }
+    .fade-up-5 { animation-delay: 0.25s; }
+    .fade-up-6 { animation-delay: 0.3s; }
+    .fade-up-7 { animation-delay: 0.35s; }
+    .fade-up-8 { animation-delay: 0.4s; }
+    .recharts-wrapper { font-family: 'DM Sans', sans-serif !important; }
+    .recharts-text { font-family: 'DM Sans', sans-serif !important; }
+  </style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <style>body { box-sizing: border-box; }</style>
+ </head>
+ <body class="h-full bg-gradient-to-br from-slate-50 to-slate-100 text-slate-900 font-sans">
+  <div class="app-root w-full" id="app">
+   <div class="flex h-full"><!-- SIDEBAR -->
+    <aside id="sidebar" class="hidden lg:flex flex-col w-64 bg-white border-r border-slate-200 p-4 flex-shrink-0 sticky top-0">
+     <div class="flex items-center gap-3 mb-8 px-2">
+      <div class="w-9 h-9 rounded-lg bg-emerald-500/20 flex items-center justify-center"><i data-lucide="bar-chart-3" class="w-5 h-5 text-emerald-600"></i>
+      </div>
+      <div>
+       <div class="font-bold text-sm text-slate-900" id="sidebar-title">
+        CBO Monitor
+       </div>
+       <div class="text-[10px] text-slate-600 uppercase tracking-widest" id="sidebar-org">
+        NRLM
+       </div>
+      </div>
+     </div>
+     <nav class="flex flex-col gap-1 text-sm"><a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-emerald-50 text-emerald-700 font-medium"> <i data-lucide="layout-dashboard" class="w-4 h-4"></i>Overview </a> <a href="#location" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"> <i data-lucide="map-pin" class="w-4 h-4"></i>Location </a> <a href="#timeseries" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"> <i data-lucide="trending-up" class="w-4 h-4"></i>Time Series </a> <a href="#financial" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"> <i data-lucide="wallet" class="w-4 h-4"></i>Financials </a> <a href="#quality" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"> <i data-lucide="check-circle" class="w-4 h-4"></i>Quality </a> <a href="#rankings" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"> <i data-lucide="trophy" class="w-4 h-4"></i>Rankings </a> <a href="#alerts" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"> <i data-lucide="alert-triangle" class="w-4 h-4"></i>Alerts </a>
+     </nav>
+     <div class="mt-auto pt-6 border-t border-slate-200">
+      <div class="text-[10px] text-slate-600 px-3">
+       Last synced: <span class="text-slate-700" id="last-sync"></span>
+      </div>
+     </div>
+    </aside><!-- MAIN CONTENT -->
+    <main class="flex-1 overflow-auto p-6 lg:p-8 space-y-8 max-w-7xl mx-auto w-full"><!-- HEADER -->
+     <header class="fade-up">
+      <h1 class="text-3xl lg:text-4xl font-bold text-slate-900 mb-2" id="main-title">CBO Monitoring Dashboard</h1>
+      <p class="text-base text-slate-600" id="main-org">National Rural Livelihoods Mission</p>
+     </header><!-- FILTERS -->
+     <div class="fade-up fade-up-1 bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap gap-3 items-center"><select id="filter-district" class="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"> <option value="">All Districts</option> </select> <select id="filter-block" class="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"> <option value="">All Blocks</option> </select> <select id="filter-period" class="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"> <option value="all">All Time</option> <option value="30">Last 30 Days</option> <option value="90">Last 90 Days</option> <option value="180">Last 6 Months</option> </select> <button onclick="resetFilters()" class="ml-auto px-3 py-2 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 transition"> <i data-lucide="refresh-cw" class="w-4 h-4"></i> </button>
+     </div><!-- KPI CARDS -->
+     <section id="kpi-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></section><!-- LOCATION ANALYTICS -->
+     <section id="location" class="space-y-4 fade-up fade-up-2">
+      <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2"><i data-lucide="map-pin" class="w-5 h-5 text-emerald-600"></i>Location Analytics</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+       <div class="bg-white border border-slate-200 rounded-xl p-6">
+        <h3 class="text-sm font-semibold text-slate-700 mb-4">District-wise Meetings &amp; Savings</h3>
+        <div id="district-chart" class="w-full" style="height: 320px;"></div>
+       </div>
+       <div class="bg-white border border-slate-200 rounded-xl p-6">
+        <h3 class="text-sm font-semibold text-slate-700 mb-4">Block Performance</h3>
+        <div id="block-table-container" class="overflow-auto max-h-96">
+         <table class="w-full text-sm">
+          <thead>
+           <tr class="border-b border-slate-200 bg-slate-50">
+            <th class="text-left py-3 px-3 font-semibold text-slate-700">Block</th>
+            <th class="text-right py-3 px-3 font-semibold text-slate-700">Meetings</th>
+            <th class="text-right py-3 px-3 font-semibold text-slate-700">Savings</th>
+            <th class="text-right py-3 px-3 font-semibold text-slate-700">Loans</th>
+           </tr>
+          </thead>
+          <tbody id="block-table-body"></tbody>
+         </table>
+        </div>
+       </div>
+      </div>
+     </section><!-- TIME SERIES -->
+     <section id="timeseries" class="space-y-4 fade-up fade-up-3">
+      <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2"><i data-lucide="trending-up" class="w-5 h-5 text-emerald-600"></i>Time Series Trends</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+       <div class="bg-white border border-slate-200 rounded-xl p-6">
+        <h3 class="text-sm font-semibold text-slate-700 mb-4">Meetings Over Time</h3>
+        <div id="meetings-time-chart" style="height: 300px;"></div>
+       </div>
+       <div class="bg-white border border-slate-200 rounded-xl p-6">
+        <h3 class="text-sm font-semibold text-slate-700 mb-4">Savings Trend</h3>
+        <div id="savings-time-chart" style="height: 300px;"></div>
+       </div>
+       <div class="bg-white border border-slate-200 rounded-xl p-6">
+        <h3 class="text-sm font-semibold text-slate-700 mb-4">Loan Disbursement</h3>
+        <div id="loans-time-chart" style="height: 300px;"></div>
+       </div>
+       <div class="bg-white border border-slate-200 rounded-xl p-6">
+        <h3 class="text-sm font-semibold text-slate-700 mb-4">Repayment Trend</h3>
+        <div id="repayment-time-chart" style="height: 300px;"></div>
+       </div>
+      </div>
+     </section><!-- FINANCIAL ANALYTICS -->
+     <section id="financial" class="space-y-4 fade-up fade-up-4">
+      <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2"><i data-lucide="wallet" class="w-5 h-5 text-emerald-600"></i>Financial Analytics</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="financial-cards"></div>
+      <div class="bg-white border border-slate-200 rounded-xl p-6">
+       <h3 class="text-sm font-semibold text-slate-700 mb-4">Financial Summary by District</h3>
+       <div id="financial-chart" style="height: 320px;"></div>
+      </div>
+     </section><!-- QUALITY METRICS -->
+     <section id="quality" class="space-y-4 fade-up fade-up-5">
+      <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2"><i data-lucide="check-circle" class="w-5 h-5 text-emerald-600"></i>Quality Metrics</h2>
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3" id="quality-cards"></div>
+     </section><!-- RANKINGS -->
+     <section id="rankings" class="space-y-4 fade-up fade-up-6">
+      <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2"><i data-lucide="trophy" class="w-5 h-5 text-emerald-600"></i>Performance Rankings</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+       <div class="bg-white border border-slate-200 rounded-xl p-6">
+        <h3 class="text-sm font-semibold text-slate-700 mb-4">Top Districts by Savings</h3>
+        <div id="ranking-districts" class="space-y-3"></div>
+       </div>
+       <div class="bg-white border border-slate-200 rounded-xl p-6">
+        <h3 class="text-sm font-semibold text-slate-700 mb-4">Top Blocks by Meetings</h3>
+        <div id="ranking-blocks" class="space-y-3"></div>
+       </div>
+       <div class="bg-white border border-slate-200 rounded-xl p-6">
+        <h3 class="text-sm font-semibold text-slate-700 mb-4">Top VOs by Activity</h3>
+        <div id="ranking-vos" class="space-y-3"></div>
+       </div>
+      </div>
+     </section><!-- ALERTS -->
+     <section id="alerts" class="space-y-4 fade-up fade-up-7 pb-8">
+      <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600"></i>Alerts &amp; Flags</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="alerts-grid"></div>
+     </section>
+    </main>
+   </div>
+  </div>
+  <script>
+    // ===== DEMO DATA GENERATION =====
+    const DISTRICTS = [
+      'East Khasi Hills', 'West Khasi Hills', 'South West Khasi Hills', 'Ri Bhoi',
+      'West Jaintia Hills', 'East Jaintia Hills', 'East Garo Hills', 'West Garo Hills',
+      'North Garo Hills', 'South Garo Hills'
+    ];
+
+    const BLOCKS_BY_DISTRICT = {
+      'East Khasi Hills': ['Mylliem', 'Mawsynram', 'Shella-Bholaganj', 'Pynursla', 'Mawryngkneng'],
+      'West Khasi Hills': ['Nongstoin', 'Mawshynrut', 'Rambrai', 'Ri-Muliang'],
+      'South West Khasi Hills': ['Mawkyrwat', 'Ranikor'],
+      'Ri Bhoi': ['Umsning', 'Umling', 'Jirang'],
+      'West Jaintia Hills': ['Thadlaskein', 'Laskein', 'Amlarem'],
+      'East Jaintia Hills': ['Wapung', 'Saipung'],
+      'East Garo Hills': ['Dambo Rongjeng', 'Songsak'],
+      'West Garo Hills': ['Dalu', 'Selsella', 'Rongram', 'Dadenggre'],
+      'North Garo Hills': ['Resubelpara', 'Kharkutta'],
+      'South Garo Hills': ['Baghmara', 'Chokpot', 'Gasuapara']
+    };
+
+    const VO_NAMES = ['Khasi Women VO', 'Pnar Unity VO', 'Garo Shakti VO', 'Hill Villages VO', 'Rural Voices VO'];
+
+    function generateMeetingData() {
+      const meetings = [];
+      let id = 0;
+      const startDate = new Date('2024-08-01');
+
+      DISTRICTS.forEach((dist, di) => {
+        const blocks = BLOCKS_BY_DISTRICT[dist];
+        blocks.forEach((block, bi) => {
+          const numMeetings = Math.floor(Math.random() * 20) + 15;
+          
+          for (let m = 0; m < numMeetings; m++) {
+            const daysOffset = Math.floor(Math.random() * 180);
+            const meetingDate = new Date(startDate);
+            meetingDate.setDate(meetingDate.getDate() + daysOffset);
+
+            const held = Math.random() > 0.2;
+            const attendance = held ? Math.floor(Math.random() * 35) + 8 : 0;
+            const savingsAmount = held && Math.random() > 0.3 ? Math.floor(Math.random() * 5000) + 500 : 0;
+            const loanAmount = held && Math.random() > 0.5 ? Math.floor(Math.random() * 30000) + 5000 : 0;
+            const repaymentAmount = loanAmount > 0 && Math.random() > 0.4 ? Math.floor(loanAmount * (Math.random() * 0.6 + 0.1)) : 0;
+
+            meetings.push({
+              id: `m-${id++}`,
+              district: dist,
+              block: block,
+              vo_name: VO_NAMES[Math.floor(Math.random() * VO_NAMES.length)],
+              meeting_held: held,
+              members_attended: attendance,
+              savings_amount: savingsAmount,
+              loan_amount: loanAmount,
+              repayment_amount: repaymentAmount,
+              created_at: meetingDate.toISOString().split('T')[0]
+            });
+          }
+        });
+      });
+
+      return meetings;
+    }
+
+    const DATA = { meetings: generateMeetingData() };
+    let filteredMeetings = [...DATA.meetings];
+
+    // ===== UTILITIES =====
+    const fmt = n => n >= 10000000 ? (n / 10000000).toFixed(2) + 'Cr' : n >= 100000 ? (n / 100000).toFixed(2) + 'L' : n >= 1000 ? (n / 1000).toFixed(1) + 'K' : n;
+    const fmtCurrency = n => '₹' + fmt(n);
+    const pct = (a, b) => b === 0 ? 0 : Math.round(a / b * 100);
+
+    function populateFilters() {
+      const distSelect = document.getElementById('filter-district');
+      distSelect.innerHTML = '<option value="">All Districts</option>' + DISTRICTS.map(d => `<option value="${d}">${d}</option>`).join('');
+      updateBlockFilter();
+    }
+
+    function updateBlockFilter() {
+      const distValue = document.getElementById('filter-district').value;
+      const blockSelect = document.getElementById('filter-block');
+      const blocks = distValue ? BLOCKS_BY_DISTRICT[distValue] : Object.values(BLOCKS_BY_DISTRICT).flat();
+      blockSelect.innerHTML = '<option value="">All Blocks</option>' + blocks.map(b => `<option value="${b}">${b}</option>`).join('');
+    }
+
+    function applyFilters() {
+      const distValue = document.getElementById('filter-district').value;
+      const blockValue = document.getElementById('filter-block').value;
+      const periodValue = document.getElementById('filter-period').value;
+
+      filteredMeetings = DATA.meetings.filter(m => {
+        if (distValue && m.district !== distValue) return false;
+        if (blockValue && m.block !== blockValue) return false;
+        if (periodValue !== 'all') {
+          const cutoff = new Date();
+          cutoff.setDate(cutoff.getDate() - parseInt(periodValue));
+          if (new Date(m.created_at) < cutoff) return false;
+        }
+        return true;
+      });
+
+      renderAll();
+    }
+
+    function resetFilters() {
+      document.getElementById('filter-district').value = '';
+      document.getElementById('filter-block').value = '';
+      document.getElementById('filter-period').value = 'all';
+      updateBlockFilter();
+      applyFilters();
+    }
+
+    document.getElementById('filter-district').addEventListener('change', () => {
+      updateBlockFilter();
+      applyFilters();
+    });
+    document.getElementById('filter-block').addEventListener('change', applyFilters);
+    document.getElementById('filter-period').addEventListener('change', applyFilters);
+
+    // ===== KPI RENDERING =====
+    function renderKPIs() {
+      const m = filteredMeetings;
+      const totalMeetings = m.length;
+      const held = m.filter(x => x.meeting_held).length;
+      const attendance = m.reduce((s, x) => s + x.members_attended, 0);
+      const savings = m.reduce((s, x) => s + x.savings_amount, 0);
+      const loans = m.reduce((s, x) => s + x.loan_amount, 0);
+      const repay = m.reduce((s, x) => s + x.repayment_amount, 0);
+
+      const kpis = [
+        { label: 'Total Meetings', value: totalMeetings, icon: 'calendar', color: 'blue' },
+        { label: 'Meetings Held', value: held + ' (' + pct(held, totalMeetings) + '%)', icon: 'check-circle', color: 'emerald' },
+        { label: 'Total Attendance', value: fmt(attendance), icon: 'users', color: 'amber' },
+        { label: 'Total Savings', value: fmtCurrency(savings), icon: 'piggy-bank', color: 'green' },
+        { label: 'Total Loans', value: fmtCurrency(loans), icon: 'banknote', color: 'orange' },
+        { label: 'Total Repayment', value: fmtCurrency(repay), icon: 'arrow-down-circle', color: 'teal' },
+        { label: 'Avg Attendance', value: Math.round(attendance / Math.max(held, 1)), icon: 'user-check', color: 'violet' },
+        { label: 'VOs Active', value: new Set(m.map(x => x.vo_name)).size, icon: 'users-2', color: 'pink' }
+      ];
+
+      const container = document.getElementById('kpi-section');
+      container.innerHTML = kpis.map((k, i) => `
+        <div class="bg-white border border-slate-200 rounded-xl p-5 fade-up fade-up-${i % 8 + 1} hover:shadow-lg transition-all">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs text-slate-600 uppercase tracking-wide font-medium">${k.label}</span>
+            <div class="w-8 h-8 rounded-lg bg-${k.color}-500/10 flex items-center justify-center">
+              <i data-lucide="${k.icon}" class="w-4 h-4 text-${k.color}-600"></i>
+            </div>
+          </div>
+          <div class="text-2xl font-bold text-slate-900">${k.value}</div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    // ===== RECHARTS RENDERING =====
+    function renderChart(containerId, data, chartType = 'bar', dataKeys = []) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const colors = ['#10b981', '#0ea5e9', '#f59e0b', '#ef4444', '#8b5cf6'];
+
+      if (chartType === 'bar') {
+        const html = `
+          <svg width="100%" height="100%" viewBox="0 0 600 300" style="overflow: visible;">
+            <rect width="600" height="300" fill="none"/>
+            <g id="bars"></g>
+            <g id="xaxis"></g>
+            <g id="yaxis"></g>
+          </svg>
+        `;
+        container.innerHTML = html;
+
+        if (data.length === 0) return;
+
+        const padding = { top: 20, right: 20, bottom: 40, left: 50 };
+        const chartW = 600 - padding.left - padding.right;
+        const chartH = 300 - padding.top - padding.bottom;
+
+        const maxValue = Math.max(...data.flatMap(d => dataKeys.map(k => d[k] || 0)));
+        const barWidth = chartW / data.length * 0.7;
+        const barGap = chartW / data.length * 0.3;
+
+        let barsHtml = '';
+        data.forEach((d, i) => {
+          let offset = 0;
+          dataKeys.forEach((key, ki) => {
+            const value = d[key] || 0;
+            const height = (value / maxValue) * chartH;
+            const x = padding.left + i * (barWidth + barGap) + offset;
+            const y = padding.top + chartH - height;
+            const barW = barWidth / dataKeys.length;
+            const color = colors[ki % colors.length];
+
+            barsHtml += `<rect x="${x}" y="${y}" width="${barW}" height="${height}" fill="${color}" opacity="0.8" rx="2"/>`;
+            offset += barW;
+          });
+
+          // X axis label
+          const labelX = padding.left + i * (barWidth + barGap) + barWidth / 2;
+          const labelY = padding.top + chartH + 25;
+          barsHtml += `<text x="${labelX}" y="${labelY}" text-anchor="middle" font-size="12" fill="#64748b" class="recharts-text">${(d.label || d.name || '').substring(0, 8)}</text>`;
+        });
+
+        // Y axis
+        let yAxis = '';
+        for (let i = 0; i <= 4; i++) {
+          const y = padding.top + (chartH / 4) * (4 - i);
+          const val = (maxValue / 4 * i);
+          yAxis += `<line x1="${padding.left - 5}" y1="${y}" x2="${padding.left}" y2="${y}" stroke="#cbd5e1"/>`;
+          yAxis += `<text x="${padding.left - 10}" y="${y + 4}" text-anchor="end" font-size="11" fill="#94a3b8" class="recharts-text">${fmt(val)}</text>`;
+        }
+
+        container.querySelector('#bars').innerHTML = barsHtml;
+        container.querySelector('#yaxis').innerHTML = yAxis;
+        container.querySelector('#xaxis').innerHTML = `<line x1="${padding.left}" y1="${padding.top + chartH}" x2="${600 - padding.right}" y2="${padding.top + chartH}" stroke="#e2e8f0" stroke-width="1"/>`;
+      }
+    }
+
+    // ===== LOCATION ANALYTICS =====
+    function renderLocationAnalytics() {
+      const distData = {};
+      filteredMeetings.forEach(m => {
+        if (!distData[m.district]) {
+          distData[m.district] = { label: m.district, name: m.district, meetings: 0, savings: 0, loans: 0 };
+        }
+        distData[m.district].meetings++;
+        distData[m.district].savings += m.savings_amount;
+        distData[m.district].loans += m.loan_amount;
+      });
+
+      const distArray = Object.values(distData);
+      renderChart('district-chart', distArray, 'bar', ['savings', 'loans']);
+
+      // Block table
+      const blockData = {};
+      filteredMeetings.forEach(m => {
+        if (!blockData[m.block]) {
+          blockData[m.block] = { block: m.block, meetings: 0, savings: 0, loans: 0 };
+        }
+        blockData[m.block].meetings++;
+        blockData[m.block].savings += m.savings_amount;
+        blockData[m.block].loans += m.loan_amount;
+      });
+
+      const sorted = Object.values(blockData).sort((a, b) => b.savings - a.savings);
+      document.getElementById('block-table-body').innerHTML = sorted.map(r => `
+        <tr class="border-b border-slate-200 hover:bg-slate-50 transition">
+          <td class="py-3 px-3 text-slate-700 font-medium">${r.block}</td>
+          <td class="py-3 px-3 text-right font-mono text-slate-600">${r.meetings}</td>
+          <td class="py-3 px-3 text-right font-mono text-emerald-600 font-semibold">${fmtCurrency(r.savings)}</td>
+          <td class="py-3 px-3 text-right font-mono text-blue-600 font-semibold">${fmtCurrency(r.loans)}</td>
+        </tr>
+      `).join('');
+    }
+
+    // ===== TIME SERIES =====
+    function renderTimeSeries() {
+      const monthly = {};
+      filteredMeetings.forEach(m => {
+        const date = new Date(m.created_at);
+        const key = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
+        if (!monthly[key]) {
+          monthly[key] = { label: key, month: key, meetings: 0, savings: 0, loans: 0, repayment: 0 };
+        }
+        monthly[key].meetings++;
+        monthly[key].savings += m.savings_amount;
+        monthly[key].loans += m.loan_amount;
+        monthly[key].repayment += m.repayment_amount;
+      });
+
+      const sorted = Object.values(monthly).sort((a, b) => a.month.localeCompare(b.month));
+      renderChart('meetings-time-chart', sorted, 'bar', ['meetings']);
+      renderChart('savings-time-chart', sorted, 'bar', ['savings']);
+      renderChart('loans-time-chart', sorted, 'bar', ['loans']);
+      renderChart('repayment-time-chart', sorted, 'bar', ['repayment']);
+    }
+
+    // ===== FINANCIAL ANALYTICS =====
+    function renderFinancials() {
+      const m = filteredMeetings;
+      const savings = m.reduce((s, x) => s + x.savings_amount, 0);
+      const loans = m.reduce((s, x) => s + x.loan_amount, 0);
+      const repay = m.reduce((s, x) => s + x.repayment_amount, 0);
+      const outstanding = loans - repay;
+
+      const cards = [
+        { label: 'Total Savings', value: fmtCurrency(savings), color: 'emerald', icon: 'piggy-bank' },
+        { label: 'Total Disbursed', value: fmtCurrency(loans), color: 'blue', icon: 'banknote' },
+        { label: 'Total Repaid', value: fmtCurrency(repay), color: 'teal', icon: 'arrow-down-circle' },
+        { label: 'Outstanding', value: fmtCurrency(outstanding), color: outstanding > 0 ? 'amber' : 'emerald', icon: 'alert-circle' }
+      ];
+
+      document.getElementById('financial-cards').innerHTML = cards.map(c => `
+        <div class="bg-gradient-to-br from-${c.color}-50 to-${c.color}-100 border border-${c.color}-200 rounded-xl p-5">
+          <div class="flex items-center gap-2 mb-2">
+            <i data-lucide="${c.icon}" class="w-4 h-4 text-${c.color}-600"></i>
+            <span class="text-xs text-${c.color}-700 uppercase font-medium">${c.label}</span>
+          </div>
+          <div class="text-2xl font-bold text-${c.color}-900">${c.value}</div>
+        </div>
+      `).join('');
+
+      // District summary
+      const distFin = {};
+      m.forEach(x => {
+        if (!distFin[x.district]) {
+          distFin[x.district] = { label: x.district, name: x.district, savings: 0, loans: 0, repayment: 0 };
+        }
+        distFin[x.district].savings += x.savings_amount;
+        distFin[x.district].loans += x.loan_amount;
+        distFin[x.district].repayment += x.repayment_amount;
+      });
+
+      renderChart('financial-chart', Object.values(distFin), 'bar', ['savings', 'loans', 'repayment']);
+      lucide.createIcons();
+    }
+
+    // ===== QUALITY METRICS =====
+    function renderQuality() {
+      const m = filteredMeetings;
+      const total = m.length;
+      const held = m.filter(x => x.meeting_held).length;
+      const withSavings = m.filter(x => x.savings_amount > 0).length;
+      const withLoans = m.filter(x => x.loan_amount > 0).length;
+      const avgAttendance = held > 0 ? Math.round(m.filter(x => x.meeting_held).reduce((s, x) => s + x.members_attended, 0) / held) : 0;
+
+      const metrics = [
+        { label: '% Held', value: pct(held, total) + '%', sub: held + '/' + total, color: 'emerald' },
+        { label: 'Avg Attendance', value: avgAttendance, sub: 'per meeting', color: 'blue' },
+        { label: '% with Savings', value: pct(withSavings, total) + '%', sub: withSavings + '/' + total, color: 'green' },
+        { label: '% with Loans', value: pct(withLoans, total) + '%', sub: withLoans + '/' + total, color: 'amber' },
+        { label: 'Repay Rate', value: m.reduce((s, x) => s + (x.loan_amount > 0 ? (x.repayment_amount / x.loan_amount) : 0), 0) / Math.max(withLoans, 1) * 100 + '%', sub: 'of loans', color: 'violet' }
+      ];
+
+      document.getElementById('quality-cards').innerHTML = metrics.map((q, i) => `
+        <div class="bg-white border border-slate-200 rounded-xl p-4 text-center fade-up fade-up-${i + 1} hover:shadow-md transition">
+          <div class="text-3xl font-bold text-${q.color}-600 mb-1">${q.value}</div>
+          <div class="text-xs text-slate-700 uppercase font-medium">${q.label}</div>
+          <div class="text-[10px] text-slate-500 mt-1">${q.sub}</div>
+        </div>
+      `).join('');
+    }
+
+    // ===== RANKINGS =====
+    function renderRankings() {
+      const m = filteredMeetings;
+
+      // Top districts by savings
+      const distSav = {};
+      m.forEach(x => {
+        distSav[x.district] = (distSav[x.district] || 0) + x.savings_amount;
+      });
+      const topDist = Object.entries(distSav).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const maxDist = topDist[0]?.[1] || 1;
+
+      document.getElementById('ranking-districts').innerHTML = topDist.map(([name, val], i) => `
+        <div class="flex items-center gap-3">
+          <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-slate-400' : 'bg-amber-700'}">${i + 1}</span>
+          <div class="flex-1">
+            <div class="flex justify-between mb-1">
+              <span class="text-sm text-slate-700 font-medium">${name}</span>
+              <span class="text-sm font-bold text-emerald-600">${fmtCurrency(val)}</span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-2">
+              <div class="bg-emerald-500 h-2 rounded-full transition" style="width: ${val / maxDist * 100}%"></div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // Top blocks by meetings
+      const blockMeet = {};
+      m.forEach(x => {
+        blockMeet[x.block] = (blockMeet[x.block] || 0) + 1;
+      });
+      const topBlocks = Object.entries(blockMeet).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const maxBlock = topBlocks[0]?.[1] || 1;
+
+      document.getElementById('ranking-blocks').innerHTML = topBlocks.map(([name, val], i) => `
+        <div class="flex items-center gap-3">
+          <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${i === 0 ? 'bg-blue-500' : i === 1 ? 'bg-slate-400' : 'bg-blue-700'}">${i + 1}</span>
+          <div class="flex-1">
+            <div class="flex justify-between mb-1">
+              <span class="text-sm text-slate-700 font-medium">${name}</span>
+              <span class="text-sm font-bold text-blue-600">${val} mtgs</span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-2">
+              <div class="bg-blue-500 h-2 rounded-full transition" style="width: ${val / maxBlock * 100}%"></div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // Top VOs
+      const voAct = {};
+      m.forEach(x => {
+        voAct[x.vo_name] = (voAct[x.vo_name] || 0) + (x.meeting_held ? 1 : 0) + (x.savings_amount > 0 ? 1 : 0) + (x.loan_amount > 0 ? 1 : 0);
+      });
+      const topVos = Object.entries(voAct).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const maxVo = topVos[0]?.[1] || 1;
+
+      document.getElementById('ranking-vos').innerHTML = topVos.map(([name, val], i) => `
+        <div class="flex items-center gap-3">
+          <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${i === 0 ? 'bg-violet-500' : i === 1 ? 'bg-slate-400' : 'bg-violet-700'}">${i + 1}</span>
+          <div class="flex-1">
+            <div class="flex justify-between mb-1">
+              <span class="text-sm text-slate-700 font-medium">${name}</span>
+              <span class="text-sm font-bold text-violet-600">${val} pts</span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-2">
+              <div class="bg-violet-500 h-2 rounded-full transition" style="width: ${val / maxVo * 100}%"></div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ===== ALERTS =====
+    function renderAlerts() {
+      const m = filteredMeetings;
+      const notHeld = m.filter(x => !x.meeting_held).length;
+      const lowAttendance = m.filter(x => x.meeting_held && x.members_attended < 10).length;
+      const noSavings = m.filter(x => x.meeting_held && x.savings_amount === 0).length;
+      const noRepay = m.filter(x => x.loan_amount > 0 && x.repayment_amount === 0).length;
+
+      const alerts = [
+        { label: 'Not Held', count: notHeld, color: 'red', icon: 'x-circle', desc: 'Scheduled but not conducted' },
+        { label: 'Low Attendance', count: lowAttendance, color: 'amber', icon: 'users', desc: 'Below 10 members' },
+        { label: 'No Savings', count: noSavings, color: 'orange', icon: 'piggy-bank', desc: 'Held but no savings' },
+        { label: 'No Repayment', count: noRepay, color: 'rose', icon: 'alert-triangle', desc: 'Loan given, no repay' }
+      ];
+
+      document.getElementById('alerts-grid').innerHTML = alerts.map(a => `
+        <div class="bg-${a.color}-50 border border-${a.color}-200 rounded-xl p-5 hover:shadow-lg transition">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-8 h-8 rounded-lg bg-${a.color}-500/10 flex items-center justify-center">
+              <i data-lucide="${a.icon}" class="w-4 h-4 text-${a.color}-600"></i>
+            </div>
+            <span class="text-xs text-${a.color}-700 uppercase font-semibold">${a.label}</span>
+          </div>
+          <div class="text-3xl font-bold text-${a.color}-600 mb-1">${a.count}</div>
+          <div class="text-[10px] text-${a.color}-600/70">${a.desc}</div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    // ===== RENDER ALL =====
+    function renderAll() {
+      renderKPIs();
+      renderLocationAnalytics();
+      renderTimeSeries();
+      renderFinancials();
+      renderQuality();
+      renderRankings();
+      renderAlerts();
+    }
+
+    // ===== ELEMENT SDK =====
+    const defaultConfig = {
+      dashboard_title: 'CBO Monitoring Dashboard',
+      org_name: 'National Rural Livelihoods Mission',
+      background_color: '#f8fafc',
+      text_color: '#0f172a',
+      primary_color: '#10b981'
+    };
+
+    function applyConfig(config) {
+      const c = { ...defaultConfig, ...config };
+      document.getElementById('main-title').textContent = c.dashboard_title;
+      document.getElementById('main-org').textContent = c.org_name;
+      document.getElementById('sidebar-title').textContent = c.dashboard_title.split(' ').slice(0, 2).join(' ');
+      document.getElementById('sidebar-org').textContent = c.org_name.split(' ').map(w => w[0]).join('').slice(0, 5);
+    }
+
+    window.elementSdk.init({
+      defaultConfig,
+      onConfigChange: async (config) => { applyConfig(config); },
+      mapToCapabilities: (config) => ({
+        recolorables: [
+          { get: () => config.primary_color || defaultConfig.primary_color, set: v => { config.primary_color = v; window.elementSdk.setConfig({ primary_color: v }); } }
+        ],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      }),
+      mapToEditPanelValues: (config) => new Map([
+        ['dashboard_title', config.dashboard_title || defaultConfig.dashboard_title],
+        ['org_name', config.org_name || defaultConfig.org_name]
+      ])
+    });
+
+    // ===== INITIALIZE =====
+    document.getElementById('last-sync').textContent = new Date().toLocaleString();
+    populateFilters();
+    renderAll();
+    lucide.createIcons();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e23c9b924f859b8',t:'MTc3NDUwMzI4NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
