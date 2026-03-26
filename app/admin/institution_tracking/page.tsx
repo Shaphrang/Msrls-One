@@ -4,7 +4,6 @@
   import { useEffect, useState } from "react";
   import { Target, CheckCircle2, Users } from "lucide-react";
 
-
   import {
   Chart as ChartJS,
   ArcElement,
